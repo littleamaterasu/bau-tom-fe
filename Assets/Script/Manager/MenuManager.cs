@@ -19,6 +19,9 @@ public class MenuManager : MonoBehaviour
 
     void Start()
     {
+        PlayerPrefs.DeleteAll();
+        PlayerPrefs.Save();
+
         loginButton.onClick.AddListener(SetLoginMode);
         registerButton.onClick.AddListener(SetRegisterMode);
         submitButton.onClick.AddListener(SendRequest);

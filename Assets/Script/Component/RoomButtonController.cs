@@ -20,6 +20,11 @@ public class RoomButtonController : MonoBehaviour
     private int currentPlayers;
     private ClientWebSocket ws;
 
+    private void Start()
+    {
+        roomButton.onClick.AddListener(SendJoinRoomRequest);
+    }
+
     public void Setup(string roomId, int currentPlayers, ClientWebSocket ws)
     {
         this.roomId = roomId;
@@ -28,7 +33,7 @@ public class RoomButtonController : MonoBehaviour
         roomIdText.text = roomId;
         currentPlayersText.text = currentPlayers.ToString() + "/4";
 
-        roomButton.onClick.AddListener(SendJoinRoomRequest);
+        
     }
 
     private async void SendJoinRoomRequest()

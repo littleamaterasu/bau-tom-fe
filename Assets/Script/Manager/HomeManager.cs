@@ -1,11 +1,11 @@
-﻿using UnityEngine;
-using System;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
 
 public class HomeManager : MonoBehaviour
 {
@@ -25,17 +25,18 @@ public class HomeManager : MonoBehaviour
 
     private ClientWebSocket websocket;
     private Dictionary<string, GameObject> roomButtons = new Dictionary<string, GameObject>();
-    
+
     // Start
     async void Start()
     {
         addRoom.onClick.AddListener(() => StartCoroutine(HandleCreateRoomCooldown()));
-        closeGame.onClick.AddListener(() => {
-            #if UNITY_EDITOR
-                UnityEditor.EditorApplication.isPlaying = false;
-            #else
+        closeGame.onClick.AddListener(() =>
+        {
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
                 Application.Quit();
-            #endif
+#endif
         });
 
         leaveRoom.onClick.AddListener(() => LeaveRoom());
@@ -53,7 +54,7 @@ public class HomeManager : MonoBehaviour
         websocket = new ClientWebSocket();
         Uri serverUri = new Uri(wsUrl);
         await websocket.ConnectAsync(serverUri, CancellationToken.None);
-        
+
         // Web socket cho player manager
         playerManager.SetWebSocket(websocket);
         StartListening();
@@ -81,7 +82,7 @@ public class HomeManager : MonoBehaviour
         try
         {
             EventData response = JsonUtility.FromJson<EventData>(message);
- 
+
             // thông tin phòng (chỉ hiển thị khi mainUI đang bật)
             if (response.eventName == "room_list" && mainUI != null && mainUI.activeInHierarchy)
             {
@@ -96,9 +97,9 @@ public class HomeManager : MonoBehaviour
                 roomManager.SetRoomId(playerRoomData.roomId);
                 playerManager.SetUserName(playerRoomData.username);
                 SwitchToMainGame();
-            } 
+            }
             // kết quả xúc sắc của phòng
-            else if(response.eventName == "dice_result")
+            else if (response.eventName == "dice_result")
             {
                 try
                 {
@@ -115,9 +116,9 @@ public class HomeManager : MonoBehaviour
                 {
                     Debug.LogError($"Error parsing 'dice_result' data: {ex.Message}");
                 }
-            } 
+            }
             // thông tin các người chơi
-            else if(response.eventName == "room_players" && playerManager != null && playerManager.isActiveAndEnabled)
+            else if (response.eventName == "room_players" && playerManager != null && playerManager.isActiveAndEnabled)
             {
                 try
                 {
@@ -132,16 +133,17 @@ public class HomeManager : MonoBehaviour
                 {
                     Debug.LogError($"Error parsing 'room_players' data: {ex.Message}");
                 }
-            } 
+            }
             // rời phòng thành công
-            else if(response.eventName == "leave_room_success")
+            else if (response.eventName == "leave_room_success")
             {
                 SwitchToRoomList();
-            } 
+            }
             // đặt cược thành công
-            else if(response.eventName == "gamble_success")
+            else if (response.eventName == "gameble_success")
             {
                 playerManager.CloseBetUI();
+                playerManager.PlayAnimation(true);
             }
             // sự kiện khác
             else
@@ -243,8 +245,9 @@ public class HomeManager : MonoBehaviour
 
     void SwitchToMainGame()
     {
-        mainUI.SetActive(false); 
-        mainGame.SetActive(true); 
+        mainUI.SetActive(false);
+        mainGame.SetActive(true);
+        diceManager.Setup();
     }
 
     void SwitchToRoomList()
@@ -262,7 +265,7 @@ public class HomeManager : MonoBehaviour
         }
     }
 
-    
+
 }
 
 // Data
@@ -294,14 +297,14 @@ public class PlayerData
 {
     public string username;
     public int balance;
-    
+
 }
 [Serializable]
 public class RoomPlayersData
 {
     public string roomId;
     public List<PlayerData> playerDatas;
-    
+
 }
 
 // Event
@@ -326,6 +329,6 @@ public class JoinRoomSuccess
 [Serializable]
 public class EventData
 {
-    public string eventName;  
-    public object data;       
+    public string eventName;
+    public object data;
 }

@@ -1,7 +1,6 @@
-﻿using UnityEngine;
-using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 using Random = UnityEngine.Random;
 
 public class DiceManager : MonoBehaviour
@@ -18,8 +17,7 @@ public class DiceManager : MonoBehaviour
     private void Start()
     {
         // trạng thái ban đầu của xúc sắc
-        diceTransform.rotation = Quaternion.Euler(0, 0, 0);
-        diceTransform.position = new Vector3(0f, 0.7f, 0f);
+        Setup();
         // Định nghĩa góc quay cho từng mặt xúc sắc
         faceRotations = new Dictionary<int, Quaternion>
         {
@@ -40,9 +38,6 @@ public class DiceManager : MonoBehaviour
     private IEnumerator JumpAndRotateEffect(int face)
     {
         float elapsedTime = 0f;
-        Vector3 newPosition = diceTransform.position;  
-        newPosition.z = 0.7f;                          
-        diceTransform.position = newPosition;
         Vector3 startPosition = diceTransform.position;
 
         // Random vị trí X và Z khi chạm đất
@@ -75,5 +70,11 @@ public class DiceManager : MonoBehaviour
         // Đảm bảo vị trí cuối chính xác
         diceTransform.position = endPosition;
         diceTransform.rotation = targetRotation;
-    }   
+    }
+
+    public void Setup()
+    {
+        diceTransform.rotation = Quaternion.Euler(0, 0, 0);
+        diceTransform.position = new Vector3(0f, 0.7f, 0f);
+    }
 }

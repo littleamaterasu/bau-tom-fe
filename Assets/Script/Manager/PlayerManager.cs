@@ -1,12 +1,12 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
-using TMPro;
-using UnityEngine.UI;
+﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
-using System;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerManager : MonoBehaviour
 {
@@ -15,6 +15,7 @@ public class PlayerManager : MonoBehaviour
     public List<Button> diceOption;
     public GameObject betUI; // UI Bet
     public Button confirmBet;
+    public List<CoinAnimation> coins;
 
     private Dictionary<string, int> playersBalance = new();
     private int betOption = 0;
@@ -22,6 +23,7 @@ public class PlayerManager : MonoBehaviour
     private string username;
     private string roomId;
     private ClientWebSocket ws;
+    private int index = 0;
 
     private void Start()
     {
@@ -49,19 +51,21 @@ public class PlayerManager : MonoBehaviour
             Debug.LogError("roomPlayers is NULL!");
             return;
         }
-        Debug.Log($"Updating Players Data - Room ID: {roomId}, Players Received: {roomPlayers.Count}");
+        // Debug.Log($"Updating Players Data - Room ID: {roomId}, Players Received: {roomPlayers.Count}");
 
         int playerCount = roomPlayers.Count;
         int totalSlots = players.Count;
 
-        Debug.Log($"Total Slots: {totalSlots}");
+        // Debug.Log($"Total Slots: {totalSlots}");
 
         HashSet<string> existingUsers = new(); // Lưu các username có trong roomPlayers
 
         for (int i = 0; i < totalSlots; i++)
         {
+
             if (i < playerCount)
             {
+                
                 if (roomPlayers[i] == null)
                 {
                     Debug.LogError($"roomPlayers[{i}] is NULL!");
@@ -71,21 +75,27 @@ public class PlayerManager : MonoBehaviour
                 string username = roomPlayers[i].username;
                 int newBalance = roomPlayers[i].balance;
 
-                Debug.Log($"Processing player {i} - Username: {username}, Balance: {newBalance}");
+                // Debug.Log($"Processing player {i} - Username: {username}, Balance: {newBalance}");
 
                 // Kiểm tra balance có tăng không
-                if (playersBalance.TryGetValue(username, out int oldBalance))
+                if (roomPlayers[i].username == this.username)
                 {
-                    Debug.Log($"Old Balance: {oldBalance}, New Balance: {newBalance}");
+                    index = i;
 
-                    if (newBalance > oldBalance)
+                    if (playersBalance.TryGetValue(username, out int oldBalance))
                     {
-                        Debug.Log($"Balance increased for {username}, playing animation...");
-                        PlayAnimation();
-                    }
-                }
+                        // Debug.Log($"Old Balance: {oldBalance}, New Balance: {newBalance}");
 
-                Debug.Log("done get balanace");
+                        if (newBalance > oldBalance)
+                        {
+                            StartCoroutine(WaitForDicePlayAnimation());
+                        }
+                    }
+                    // Debug.Log("player index " + index);
+                }
+                
+
+                // Debug.Log("done get balanace");
 
                 // Cập nhật balance mới
                 playersBalance[username] = newBalance;
@@ -111,10 +121,8 @@ public class PlayerManager : MonoBehaviour
                 players[i].Hide();
             }
         }
-
-        Debug.Log("update ok");
+        // Debug.Log("update ok");
     }
-
 
     private async void SendBetRequest()
     {
@@ -124,13 +132,13 @@ public class PlayerManager : MonoBehaviour
             return;
         }
 
-        if(betOption == 0)
+        if (betOption == 0)
         {
-            Debug.Log("Chọn 1 lựa chọn");
+            // Debug.Log("Chọn 1 lựa chọn");
             return;
         }
 
-        Debug.Log("bet option " + betOption);
+        // Debug.Log("bet option " + betOption);
 
         string message = $"{{\"eventName\":\"gamble\",\"data\":{{\"roomId\":\"{roomId}\",\"username\":\"{username}\",\"amount\":\"{GetBetAmount()}\",\"option\":\"{betOption}\"}}}}";
         byte[] messageBytes = Encoding.UTF8.GetBytes(message);
@@ -140,9 +148,7 @@ public class PlayerManager : MonoBehaviour
         betOption = 0;
         betAmount = 0;
 
-        CloseBetUI();
-
-        Debug.Log("Sent gamble request: " + message);
+        // Debug.Log("Sent gamble request: " + message);
     }
 
     public int GetBetAmount()
@@ -164,9 +170,26 @@ public class PlayerManager : MonoBehaviour
     }
 
     // TODO
-    public void PlayAnimation()
+    public void PlayAnimation(bool gamble)
     {
+        // Nếu không là gamble thì dùng animation từ main
+        if (!gamble)
+        {
+            coins[4].SetEndPos(coins[index].GetStartPos());
+            coins[4].SpawnCoins();
+        }
+        // Nếu không thì dùng animation từ phía người chơi (index)
+        else
+        {
+            Debug.Log("spawn coins from " + index);
+            coins[index].SpawnCoins();
+        }
+    }
 
+    IEnumerator WaitForDicePlayAnimation()
+    {
+        yield return new WaitForSeconds(2.5f);
+        PlayAnimation(false);
     }
 
     public void SetUserName(string username)
